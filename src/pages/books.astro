@@ -1,0 +1,23 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const books = await getCollection("books");
+
+books.sort((a, b) => new Date(b.data.book.date_read?.[0]).getTime() - new Date(a.data.book.date_read?.[0]).getTime());
+---
+
+<BaseLayout>
+  <h1>All Books</h1>
+
+  <ul>
+    {books.map((book) => (
+      <li>
+        <a href={`/books/${book.id.replace('.md', '')}`}>
+          {book.data.book.title}
+        </a>
+        — {book.data.book.author} ({book.data.book.date_read?.[0]?.toDateString()})
+      </li>
+    ))}
+  </ul>
+</BaseLayout>

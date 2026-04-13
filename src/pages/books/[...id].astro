@@ -1,0 +1,147 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export async function getStaticPaths() {
+  const books = await getCollection("books");
+  return books.map((book) => ({
+    params: { id: book.id.replace(".md", "") },
+    props: { book },
+  }));
+}
+
+interface Props {
+  book: (typeof books)[0];
+}
+
+const { book } = Astro.props;
+const books = await getCollection("books");
+
+// Check for local cover image
+const images = import.meta.glob('/src/public/img/**/*.{jpg,png,jpeg,webp}', { eager: true });
+const bookImagePath = Object.keys(images).find(path => {
+  const filename = path.split('/').slice(-2).join('/').replace(/\.[^.]+$/, '');
+  return filename === book.id;
+});
+
+const coverImageUrl = bookImagePath 
+  ? bookImagePath.replace('/src/public', '') 
+  : book.data.book.cover_image_url;
+---
+
+<BaseLayout>
+  <article>
+    <h1>{book.data.book.title}</h1>
+    
+    <div class="book-meta">
+      <p><strong>Author:</strong> {book.data.book.author}</p>
+      {book.data.book.series && (
+        <p><strong>Series:</strong> {book.data.book.series} #{book.data.book.series_position}</p>
+      )}
+      {book.data.book.publication_year && (
+        <p><strong>Published:</strong> {book.data.book.publication_year}</p>
+      )}
+      {coverImageUrl && (
+        <div class="book-cover">
+          <img src={coverImageUrl} alt={book.data.book.title} />
+        </div>
+      )}
+      {book.data.book.isbn13 && (
+        <p><strong>ISBN-13:</strong> {book.data.book.isbn13}</p>
+      )}
+      {book.data.book.owned && (
+        <p><strong>Owned:</strong> Yes</p>
+      )}
+    </div>
+
+    {book.data.book.rating && (
+      <p><strong>Rating:</strong> ⭐ {book.data.book.rating}/5</p>
+    )}
+
+    {book.data.book.date_read && book.data.book.date_read.length > 0 && (
+      <div class="reading-history">
+        <strong>Read on:</strong>
+        <ul>
+          {book.data.book.date_read.map((date) => (
+            <li>{date.toDateString()}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {book.data.book.tags && book.data.book.tags.length > 0 && (
+      <div class="tags">
+        <strong>Tags:</strong> {book.data.book.tags.join(", ")}
+      </div>
+    )}
+
+    {book.data.book.goodreads && (
+      <p>
+        <a href={`https://www.goodreads.com/book/show/${book.data.book.goodreads}`}>
+          View on Goodreads
+        </a>
+      </p>
+    )}
+
+    <div class="content">
+      {book.body && <p>{book.body}</p>}
+    </div>
+
+    <nav>
+      <a href="/books">← Back to all books</a>
+    </nav>
+  </article>
+</BaseLayout>
+
+<style>
+  article {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .book-meta {
+    margin: 2rem 0;
+    padding: 1rem;
+    background: #f5f5f5;
+    border-radius: 0.5rem;
+  }
+
+  .book-meta p {
+    margin: 0.5rem 0;
+  }
+
+  .book-cover {
+    margin: 2rem 0;
+    text-align: center;
+  }
+
+  .book-cover img {
+    max-width: 250px;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .reading-history,
+  .tags {
+    margin: 1.5rem 0;
+  }
+
+  .tags {
+    font-style: italic;
+  }
+
+  nav {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ccc;
+  }
+
+  a {
+    color: #0066cc;
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+</style>
