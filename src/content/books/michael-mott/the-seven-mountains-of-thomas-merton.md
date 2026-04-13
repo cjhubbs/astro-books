@@ -1,0 +1,17 @@
+---
+book:
+  author: Michael Mott
+  cover_image_url: http://books.google.com/books/content?id=dGKyzkcmdNIC&printsec=frontcover&img=1&zoom=1&source=gbs_api
+  goodreads: '77403'
+  isbn13: '9780156806817'
+  isbn9: '0156806819'
+  owned: false
+  pages: 720
+  publication_year: 1993
+  series_position: 1993
+  tags: []
+  title: The Seven Mountains of Thomas Merton
+  date_read:
+  - 2018-06-01
+  rating: 4
+---

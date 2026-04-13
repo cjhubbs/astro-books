@@ -5,7 +5,7 @@ book:
   goodreads: '40864002'
   isbn13: ''
   isbn9: ''
-  owned: true
+  owned: false
   pages: 160
   publication_year: 2021
   series: Monk & Robot
@@ -13,7 +13,7 @@ book:
   tags: []
   title: A Psalm for the Wild-Built
   date_read:
-    - 2022-09-28
+  - 2022-09-28
   rating: 5
 ---
 

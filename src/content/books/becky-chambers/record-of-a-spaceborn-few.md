@@ -11,7 +11,7 @@ book:
   tags: []
   title: Record of a Spaceborn Few
   date_read:
-    - 2023-03-27
+  - 2023-03-27
   rating: 4
 ---
 Becky Chambers invents a universe I would want to live in, and populates it with sympathetic, kind characters. In a genre that frequently gets dark and dystopian, she writes hopeful fiction. I need more of that.

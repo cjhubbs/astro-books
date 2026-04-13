@@ -1,0 +1,20 @@
+---
+book:
+  author: Stieg Larsson
+  cover_image_url: http://books.google.com/books/content?id=-IQ786_D6nsC&printsec=frontcover&img=1&zoom=1&source=gbs_api
+  goodreads: '6892870'
+  isbn13: '9780307269997'
+  isbn9: 030726999X
+  owned: false
+  pages: 566
+  publication_year: 2010
+  series: Millennium
+  series_position: 3
+  tags: []
+  title: "The Girl Who Kicked the Hornet's Nest"
+  date_read:
+  - 2010-10-16
+  rating: 4
+---
+
+Lots of characters to keep track of, but ultimately satisfying. Good end to the trilogy.

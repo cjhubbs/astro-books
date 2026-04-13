@@ -1,0 +1,17 @@
+---
+book:
+  author: Philip Kerr
+  cover_image_url: http://books.google.com/books/content?id=KgLHngEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api
+  goodreads: '18667985'
+  isbn13: '9780399167652'
+  isbn9: 039916765X
+  owned: false
+  pages: 414
+  publication_year: 2014
+  series_position: 2014
+  tags: []
+  title: Prayer
+  date_read:
+  - 2014-07-20
+  rating: 3
+---

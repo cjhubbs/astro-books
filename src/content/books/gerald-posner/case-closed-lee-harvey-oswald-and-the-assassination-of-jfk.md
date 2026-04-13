@@ -1,0 +1,18 @@
+---
+book:
+  author: Gerald Posner
+  cover_image_url: http://books.google.com/books/content?id=fJWTEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api
+  goodreads: '38107'
+  isbn13: '9781400034628'
+  isbn9: '1400034620'
+  owned: false
+  pages: 640
+  publication_year: 2003
+  series_position: 2003
+  tags: []
+  title: 'Case Closed: Lee Harvey Oswald and the Assassination of JFK'
+  date_read:
+  - 2008-02-10
+  rating: 3
+---
+This book is probably 15 years old now, but new to me as it was on clearance for $2 at the used bookstore. I’m not up on all the Kennedy assassination conspiracy theories, but it seems to me like Posner did a pretty good job of documenting a case for Oswald as the single, independent assassin.

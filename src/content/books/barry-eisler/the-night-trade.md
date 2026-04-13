@@ -13,6 +13,6 @@ book:
   tags: []
   title: 'The Night Trade'
   date_read:
-    - 2018-05-06
+  - 2018-05-06
   rating: 4
 ---

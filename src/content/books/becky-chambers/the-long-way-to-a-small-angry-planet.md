@@ -5,7 +5,7 @@ book:
   goodreads: '27213244'
   isbn13: '9780062444134'
   isbn9: '0062444131'
-  owned: true
+  owned: false
   pages: 443
   publication_year: 2016
   series: Wayfarers
@@ -13,6 +13,6 @@ book:
   tags: []
   title: The Long Way to a Small, Angry Planet
   date_read:
-    - 2017-07-13
+  - 2017-07-13
   rating: 4
 ---

@@ -1,0 +1,17 @@
+---
+book:
+  author: Eric Metaxas
+  cover_image_url: http://books.google.com/books/content?id=QiGFtQEACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api
+  goodreads: '7501962'
+  isbn13: '9781595551382'
+  isbn9: '1595551387'
+  owned: false
+  pages: 608
+  publication_year: 2010
+  series_position: 2010
+  tags: []
+  title: 'Bonhoeffer: Pastor, Martyr, Prophet, Spy'
+  date_read:
+  - 2011-09-09
+  rating: 3
+---

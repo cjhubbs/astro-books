@@ -5,15 +5,14 @@ book:
   goodreads: '30653753'
   isbn13: '9780062936011'
   isbn9: ''
-  owned: true
+  owned: false
   pages: 164
   publication_year: 2019
-  series: ''
-  series_position: ''
+  series: 'Wayfarers'
   tags: []
-  title: To Be Taught, If Fortunate 
+  title: To Be Taught, If Fortunate
   date_read:
-    - 2025-06-17
+  - 2025-06-17
   rating: 5
 ---
 Becky Chambers. So good. A beautiful little novella about the wonder of exploration and the longing for home.

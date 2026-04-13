@@ -1,0 +1,18 @@
+---
+book:
+  author: Brad Meltzer
+  cover_image_url: http://books.google.com/books/content?id=4F1SDVZb2NgC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api
+  goodreads: '7932146'
+  isbn13: '9780446577892'
+  isbn9: '0446577898'
+  owned: false
+  pages: 449
+  publication_year: 2011
+  series: Culper Ring
+  series_position: 2011
+  tags: []
+  title: The Inner Circle
+  date_read:
+  - 2011-07-06
+  rating: 3
+---

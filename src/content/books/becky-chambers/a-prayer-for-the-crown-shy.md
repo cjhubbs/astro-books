@@ -5,7 +5,7 @@ book:
   goodreads: '58724593'
   isbn13: '9781250236234'
   isbn9: '1250236231'
-  owned: true
+  owned: false
   pages: 149
   publication_year: 2022
   series: Monk & Robot
@@ -13,6 +13,6 @@ book:
   tags: []
   title: A Prayer for the Crown-Shy
   date_read:
-    - 2022-10-15
+  - 2022-10-15
   rating: 5
 ---

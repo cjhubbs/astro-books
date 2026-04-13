@@ -10,7 +10,7 @@ book:
   tags: []
   title: The Galaxy, and the Ground Within
   date_read:
-    - 2026-02-21
+  - 2026-02-21
   rating: 5
 ---
 I unabashedly love Becky Chambers' stuff. This one is no exception.

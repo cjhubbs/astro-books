@@ -13,6 +13,6 @@ book:
   tags: []
   title: The Killer Collective
   date_read:
-    - 2019-02-04
+  - 2019-02-04
   rating: 3
 ---

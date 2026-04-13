@@ -11,7 +11,7 @@ book:
   tags: []
   title: Requiem for an Assassin
   date_read:
-    - 2007-10-09
+  - 2007-10-09
   rating: 5
 ---
 
