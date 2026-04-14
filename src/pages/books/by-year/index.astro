@@ -1,0 +1,108 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+
+const books = await getCollection("books");
+const yearsSet = new Set<number>();
+
+// Extract all unique years from date_read entries
+books.forEach(book => {
+  if (book.data.book.date_read && book.data.book.date_read.length > 0) {
+    book.data.book.date_read.forEach(date => {
+      yearsSet.add(date.getFullYear());
+    });
+  }
+});
+
+// Sort years in descending order (most recent first)
+const years = Array.from(yearsSet).sort((a, b) => b - a);
+
+// Calculate stats for each year
+const yearStats = years.map(year => {
+  let bookCount = 0;
+  let pageCount = 0;
+  
+  books.forEach(book => {
+    if (book.data.book.date_read && book.data.book.date_read.length > 0) {
+      book.data.book.date_read.forEach(date => {
+        if (date.getFullYear() === year) {
+          bookCount++;
+          pageCount += book.data.book.pages || 0;
+        }
+      });
+    }
+  });
+  
+  return { year, bookCount, pageCount };
+});
+---
+
+<BaseLayout>
+  <h1>Reading by Year</h1>
+  
+  <p>Choose a year to see all books read that year</p>
+
+  {years.length === 0 ? (
+    <p>No reading data available.</p>
+  ) : (
+    <ul class="year-list">
+      {yearStats.map(stat => (
+        <li>
+          <a href={`/books/by-year/${stat.year}`}>
+            {stat.year}
+          </a>
+          <span class="stats">
+            {stat.bookCount} book{stat.bookCount !== 1 ? 's' : ''} • {stat.pageCount} page{stat.pageCount !== 1 ? 's' : ''}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )}
+  
+  <nav>
+    <a href="/">← Back to all books</a>
+  </nav>
+</BaseLayout>
+
+<style>
+  h1 {
+    margin-bottom: 1rem;
+  }
+
+  .year-list {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  .year-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .year-list li:last-child {
+    border-bottom: none;
+  }
+
+  .year-list a {
+    text-decoration: none;
+    color: inherit;
+    font-weight: 500;
+    font-size: 1.1em;
+  }
+
+  .year-list a:hover {
+    text-decoration: underline;
+  }
+
+  .stats {
+    color: #666;
+    font-size: 0.9em;
+  }
+
+  nav {
+    margin-top: 2rem;
+  }
+</style>

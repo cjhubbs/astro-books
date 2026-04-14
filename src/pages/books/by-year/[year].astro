@@ -1,0 +1,167 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+
+export async function getStaticPaths() {
+  const books = await getCollection("books");
+  const yearsSet = new Set<number>();
+  
+  // Extract all unique years from date_read entries
+  books.forEach(book => {
+    if (book.data.book.date_read && book.data.book.date_read.length > 0) {
+      book.data.book.date_read.forEach(date => {
+        yearsSet.add(date.getFullYear());
+      });
+    }
+  });
+  
+  const years = Array.from(yearsSet).sort();
+  
+  return years.map((year) => ({
+    params: { year: year.toString() },
+    props: { year }
+  }));
+}
+
+interface Props {
+  year: number;
+}
+
+const { year } = Astro.props;
+const books = await getCollection("books");
+
+// Collect all books read in the given year with their read dates
+interface ReadEntry {
+  book: any;
+  date: Date;
+}
+
+const readsInYear: ReadEntry[] = [];
+
+books.forEach(book => {
+  if (book.data.book.date_read && book.data.book.date_read.length > 0) {
+    book.data.book.date_read.forEach(date => {
+      if (date.getFullYear() === year) {
+        readsInYear.push({
+          book,
+          date
+        });
+      }
+    });
+  }
+});
+
+// Sort by date read (ascending)
+readsInYear.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+// Calculate statistics
+const totalBooks = readsInYear.length;
+const totalPages = readsInYear.reduce((sum, entry) => {
+  const pages = entry.book.data.book.pages || 0;
+  return sum + pages;
+}, 0);
+---
+
+<BaseLayout>
+  <h1>Books Read in {year}</h1>
+  
+  <div class="summary">
+    <p>
+      <strong>{totalBooks}</strong> book{totalBooks !== 1 ? 's' : ''} read • 
+      <strong>{totalPages}</strong> page{totalPages !== 1 ? 's' : ''}
+    </p>
+  </div>
+
+  {readsInYear.length === 0 ? (
+    <p>No books read in {year}.</p>
+  ) : (
+    <ul class="books-list">
+      {readsInYear.map(entry => (
+        <li>
+          <div class="book-entry">
+            <a href={`/books/${entry.book.id.replace(".md", "")}`}>
+              {entry.book.data.book.title}
+            </a>
+            <span class="author"> by {entry.book.data.book.author}</span>
+            {entry.book.data.book.pages && (
+              <span class="pages"> ({entry.book.data.book.pages} pages)</span>
+            )}
+            <span class="date-read">
+              Read: {entry.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </span>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+  
+  <nav>
+    <a href="/books">← Back to all books</a>
+  </nav>
+</BaseLayout>
+
+<style>
+  h1 {
+    margin-bottom: 1rem;
+  }
+
+  .summary {
+    background-color: #f5f5f5;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+  }
+
+  .summary p {
+    margin: 0;
+    font-size: 1.1em;
+  }
+
+  .books-list {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  .book-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .book-entry:last-child {
+    border-bottom: none;
+  }
+
+  .book-entry a {
+    text-decoration: none;
+    color: inherit;
+    font-weight: 500;
+    font-size: 1.05em;
+  }
+
+  .book-entry a:hover {
+    text-decoration: underline;
+  }
+
+  .author {
+    color: #666;
+    font-size: 0.95em;
+  }
+
+  .pages {
+    color: #999;
+    font-size: 0.9em;
+  }
+
+  .date-read {
+    color: #999;
+    font-size: 0.85em;
+  }
+
+  nav {
+    margin-top: 2rem;
+  }
+</style>
