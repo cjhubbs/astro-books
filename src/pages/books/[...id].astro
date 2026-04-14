@@ -17,16 +17,11 @@ interface Props {
 const { book } = Astro.props;
 const books = await getCollection("books");
 
-// Check for local cover image
-const images = import.meta.glob('/src/public/img/**/*.{jpg,png,jpeg,webp}', { eager: true });
-const bookImagePath = Object.keys(images).find(path => {
-  const filename = path.split('/').slice(-2).join('/').replace(/\.[^.]+$/, '');
-  return filename === book.id;
-});
+// Check for local cover image by directly constructing the path
+// book.id is like "author-slug/book-slug"
+const localCoverPath = `/img/${book.id}.jpg`;
 
-const coverImageUrl = bookImagePath 
-  ? bookImagePath.replace('/src/public', '') 
-  : book.data.book.cover_image_url;
+const coverImageUrl = localCoverPath || book.data.book.cover_image_url;
 ---
 
 <BaseLayout>

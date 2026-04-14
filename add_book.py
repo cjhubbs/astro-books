@@ -136,6 +136,8 @@ class BookAdder:
         pages = book_data.get('pages')
         pub_year = book_data.get('publication_year')
         
+        # Get today's date in YYYY-MM-DD format
+        today = datetime.now().strftime('%Y-%m-%d')
         
         # Build frontmatter
         fm_lines = [
@@ -155,6 +157,9 @@ class BookAdder:
                 pass
         
         fm_lines.extend([
+            f"  date_read:",
+            f"    - {today}",
+            "  rating:",
             "  tags: []",
             f"  title: '{title}'",
         ])
