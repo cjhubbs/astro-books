@@ -1,0 +1,80 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export async function getStaticPaths() {
+  const books = await getCollection("books");
+  const uniqueAuthors = Array.from(new Set(books.map(book => book.data.book.author))).sort();
+  
+  return uniqueAuthors.map((author) => ({
+    params: { author: author.replace(/\s+/g, '-').toLowerCase() },
+    props: { author }
+  }));
+}
+
+interface Props {
+  author: string;
+}
+
+const { author } = Astro.props;
+const books = await getCollection("books");
+
+// Filter books by author and sort by publication_year
+const authorBooks = books
+  .filter(book => book.data.book.author === author)
+  .sort((a, b) => {
+    const yearA = a.data.book.publication_year || 0;
+    const yearB = b.data.book.publication_year || 0;
+    return yearA - yearB;
+  });
+---
+
+<BaseLayout>
+  <h1>{author}</h1>
+  
+  {authorBooks.length === 0 ? (
+    <p>No books by this author.</p>
+  ) : (
+    <ul>
+      {authorBooks.map(book => (
+        <li>
+          <a href={`/books/${book.id.replace(".md", "")}`}>
+            {book.data.book.title}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )}
+  
+  <nav>
+    <a href="/authors">← Back to all authors</a>
+  </nav>
+</BaseLayout>
+
+<style>
+  h1 {
+    margin-bottom: 1rem;
+  }
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  nav {
+    margin-top: 2rem;
+  }
+</style>

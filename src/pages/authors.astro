@@ -1,0 +1,26 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const books = await getCollection("books");
+
+const uniqueAuthors = Array.from(new Set(books.map(book => book.data.book.author))).sort();
+---
+
+<BaseLayout>
+  <h1>All Authors</h1>
+  <ul>
+
+        {uniqueAuthors.map((author) => (
+      <li>
+        <a href={`/authors/${author.replace(/\s+/g, '-').toLowerCase()}`}>
+          {author}
+        </a>
+      </li>
+    ))}
+  </ul>
+</BaseLayout>
+      </li>
+    ))
+  </ul>
+</BaseLayout>
