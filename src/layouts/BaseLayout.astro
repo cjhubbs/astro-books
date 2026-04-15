@@ -1,16 +1,63 @@
+---
+import "../styles/global.css";
+---
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><slot name="title" /></title>
   </head>
   <body>
+    <header>
+      <div class="header-container">
+        <h1 class="header-title">The Booklog</h1>
+        <button class="theme-toggle" id="theme-toggle">
+          <span id="theme-icon">🌙</span>
+          <span id="theme-text">Dark</span>
+        </button>
+      </div>
+    </header>
+
     <nav>
       <a href="/">Home</a>
       <a href="/books/by-year">By Year</a>
       <a href="/authors">By Author</a>
     </nav>
+
     <main>
       <slot />
     </main>
+
+    <script>
+      // Dark mode toggle
+      const themeToggle = document.getElementById("theme-toggle");
+      const themeIcon = document.getElementById("theme-icon");
+      const themeText = document.getElementById("theme-text");
+      const html = document.documentElement;
+
+      // Check for saved theme preference or default to light mode
+      const savedTheme = localStorage.getItem("theme") || "light";
+      html.setAttribute("data-theme", savedTheme);
+      updateThemeUI(savedTheme);
+
+      themeToggle.addEventListener("click", () => {
+        const currentTheme = html.getAttribute("data-theme");
+        const newTheme = currentTheme === "light" ? "dark" : "light";
+        html.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+        updateThemeUI(newTheme);
+      });
+
+      function updateThemeUI(theme: string) {
+        if (theme === "dark") {
+          themeIcon.textContent = "☀️";
+          themeText.textContent = "Light";
+        } else {
+          themeIcon.textContent = "🌙";
+          themeText.textContent = "Dark";
+        }
+      }
+    </script>
   </body>
 </html>

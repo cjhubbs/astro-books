@@ -1,6 +1,6 @@
 ---
 import { getCollection } from "astro:content";
-import BaseLayout from "../../../layouts/BaseLayout.astro";
+import BaseLayout from "../../../../../layouts/BaseLayout.astro";
 
 export async function getStaticPaths() {
   const books = await getCollection("books");
@@ -17,56 +17,59 @@ export async function getStaticPaths() {
   
   const years = Array.from(yearsSet).sort();
   
-  return years.map((year) => ({
-    params: { year: year.toString() },
-    props: { year }
-  }));
+  return years.flatMap((year) => {
+    // Collect all books read in the given year
+    interface ReadEntry {
+      book: any;
+      date: Date;
+    }
+
+    const readsInYear: ReadEntry[] = [];
+
+    books.forEach(book => {
+      if (book.data.book.date_read && book.data.book.date_read.length > 0) {
+        book.data.book.date_read.forEach(date => {
+          if (date.getFullYear() === year) {
+            readsInYear.push({
+              book,
+              date
+            });
+          }
+        });
+      }
+    });
+
+    const BOOKS_PER_PAGE = 12;
+    const totalBooks = readsInYear.length;
+    const totalPages = Math.ceil(totalBooks / BOOKS_PER_PAGE);
+
+    return Array.from({ length: totalPages }, (_, i) => ({
+      params: { year: year.toString(), page: String(i + 1) },
+      props: { year, page: i + 1, allReads: readsInYear, totalPages },
+    }));
+  });
 }
 
 interface Props {
   year: number;
+  page: number;
+  allReads: any[];
+  totalPages: number;
 }
 
-const { year } = Astro.props;
-const books = await getCollection("books");
+const { year, page, allReads, totalPages } = Astro.props;
+const BOOKS_PER_PAGE = 12;
+const startIndex = (page - 1) * BOOKS_PER_PAGE;
+const paginatedBooks = allReads.slice(startIndex, startIndex + BOOKS_PER_PAGE);
 
-// Collect all books read in the given year with their read dates
-interface ReadEntry {
-  book: any;
-  date: Date;
-}
+const totalBooks = allReads.length;
+const totalPages_calc = totalPages;
 
-const readsInYear: ReadEntry[] = [];
-
-books.forEach(book => {
-  if (book.data.book.date_read && book.data.book.date_read.length > 0) {
-    book.data.book.date_read.forEach(date => {
-      if (date.getFullYear() === year) {
-        readsInYear.push({
-          book,
-          date
-        });
-      }
-    });
-  }
-});
-
-// Sort by date read (descending - newest first)
-readsInYear.sort((a, b) => b.date.getTime() - a.date.getTime());
-
-// Calculate statistics
-const totalBooks = readsInYear.length;
-const totalPages = readsInYear.reduce((sum, entry) => {
+// Calculate total pages
+const totalPagesCount = allReads.reduce((sum, entry) => {
   const pages = entry.book.data.book.pages || 0;
   return sum + pages;
 }, 0);
-
-// Pagination
-const BOOKS_PER_PAGE = 12;
-const currentPage = 1;
-const totalPages_count = Math.ceil(totalBooks / BOOKS_PER_PAGE);
-const startIndex = (currentPage - 1) * BOOKS_PER_PAGE;
-const paginatedBooks = readsInYear.slice(startIndex, startIndex + BOOKS_PER_PAGE);
 
 // Helper function to render star rating
 function renderStars(rating: number | undefined): string {
@@ -103,7 +106,7 @@ function generatePageLinks(current: number, total: number): { page: number; isAc
   return links;
 }
 
-const pageLinks = generatePageLinks(currentPage, totalPages_count);
+const pageLinks = generatePageLinks(page, totalPages_calc);
 ---
 
 <BaseLayout>
@@ -112,7 +115,7 @@ const pageLinks = generatePageLinks(currentPage, totalPages_count);
   <div style="text-align: center; margin-bottom: 2rem; color: var(--text-secondary);">
     <p>
       <strong style="color: var(--text-primary);">{totalBooks}</strong> book{totalBooks !== 1 ? 's' : ''} read • 
-      <strong style="color: var(--text-primary);">{totalPages}</strong> page{totalPages !== 1 ? 's' : ''}
+      <strong style="color: var(--text-primary);">{totalPagesCount}</strong> page{totalPagesCount !== 1 ? 's' : ''}
     </p>
   </div>
 
@@ -155,39 +158,43 @@ const pageLinks = generatePageLinks(currentPage, totalPages_count);
         })}
       </div>
 
-      {totalPages_count > 1 && (
+      {totalPages_calc > 1 && (
         <div class="pagination">
           <a 
-            href={`/books/by-year/${year}`}
+            href={page === 2 ? `/books/by-year/${year}` : `/books/by-year/${year}/page/${page - 1}`}
             class="pagination-button"
-            style="opacity: 0.5; cursor: not-allowed; pointer-events: none;"
+            style={page === 1 ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;' : ''}
           >
             ← Previous
           </a>
           
-          {pageLinks.map(({ page, isActive }) => (
+          {pageLinks.map(({ page: pageNum, isActive }) => (
             <a 
-              href={page === 1 ? `/books/by-year/${year}` : `/books/by-year/${year}/page/${page}`}
+              href={pageNum === 1 ? `/books/by-year/${year}` : `/books/by-year/${year}/page/${pageNum}`}
               class="pagination-button"
               style={isActive ? 'background-color: var(--accent-color); color: white;' : ''}
             >
-              {page}
+              {pageNum}
             </a>
           ))}
           
-          {pageLinks[pageLinks.length - 1]?.page < totalPages_count && (
+          {pageLinks[pageLinks.length - 1]?.page < totalPages_calc && (
             <>
-              {pageLinks[pageLinks.length - 1]?.page < totalPages_count - 1 && <span class="pagination-info">...</span>}
-              <a href={`/books/by-year/${year}/page/${totalPages_count}`} class="pagination-button">{totalPages_count}</a>
+              {pageLinks[pageLinks.length - 1]?.page < totalPages_calc - 1 && <span class="pagination-info">...</span>}
+              <a href={`/books/by-year/${year}/page/${totalPages_calc}`} class="pagination-button">{totalPages_calc}</a>
             </>
           )}
           
-          <a href={`/books/by-year/${year}/page/2`} class="pagination-button">
+          <a 
+            href={`/books/by-year/${year}/page/${page + 1}`}
+            class="pagination-button"
+            style={page === totalPages_calc ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;' : ''}
+          >
             Next →
           </a>
           
           <span class="pagination-info">
-            Page {currentPage} of {totalPages_count}
+            Page {page} of {totalPages_calc}
           </span>
         </div>
       )}

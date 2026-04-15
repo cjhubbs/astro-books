@@ -1,25 +1,41 @@
 ---
 import { getCollection } from "astro:content";
-import BaseLayout from "../layouts/BaseLayout.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
 
-// Get all books
-const allBooks = await getCollection("books");
+export async function getStaticPaths() {
+  const allBooks = await getCollection("books");
+  
+  // Sort by most recent date_read (newest first)
+  allBooks.sort((a, b) => {
+    const dateA = a.data.book.date_read?.at(-1) ? new Date(a.data.book.date_read.at(-1)).getTime() : 0;
+    const dateB = b.data.book.date_read?.at(-1) ? new Date(b.data.book.date_read.at(-1)).getTime() : 0;
+    return dateB - dateA;
+  });
 
-// Sort by most recent date_read (newest first), handling missing dates
-allBooks.sort((a, b) => {
-  const dateA = a.data.book.date_read?.at(-1) ? new Date(a.data.book.date_read.at(-1)).getTime() : 0;
-  const dateB = b.data.book.date_read?.at(-1) ? new Date(b.data.book.date_read.at(-1)).getTime() : 0;
-  return dateB - dateA; // descending: newest first
-});
+  const BOOKS_PER_PAGE = 12;
+  const totalPages = Math.ceil(allBooks.length / BOOKS_PER_PAGE);
 
-// Pagination
-const BOOKS_PER_PAGE = 12; // 4 columns × 3 rows
-const currentPage = 1;
-const totalPages = Math.ceil(allBooks.length / BOOKS_PER_PAGE);
+  return Array.from({ length: totalPages }, (_, i) => ({
+    params: { page: String(i + 1) },
+    props: {
+      currentPage: i + 1,
+      allBooks,
+      totalPages,
+    },
+  }));
+}
+
+interface Props {
+  currentPage: number;
+  allBooks: any[];
+  totalPages: number;
+}
+
+const { currentPage, allBooks, totalPages } = Astro.props;
+const BOOKS_PER_PAGE = 12;
 const startIndex = (currentPage - 1) * BOOKS_PER_PAGE;
 const books = allBooks.slice(startIndex, startIndex + BOOKS_PER_PAGE);
 
-// Helper function to render star rating
 function renderStars(rating: number | undefined): string {
   if (!rating) return '';
   const fullStars = Math.floor(rating);
@@ -29,14 +45,12 @@ function renderStars(rating: number | undefined): string {
   return filledStars + emptyStarDisplay;
 }
 
-// Helper function to get latest date read
 function getLatestDateRead(dateRead: Date[] | undefined): string {
   if (!dateRead || dateRead.length === 0) return '';
   const latestDate = dateRead[dateRead.length - 1];
   return latestDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-// Helper function to generate page links
 function generatePageLinks(current: number, total: number): { page: number; isActive: boolean }[] {
   const links = [];
   const showMax = 5;
@@ -96,12 +110,19 @@ const pageLinks = generatePageLinks(currentPage, totalPages);
   {totalPages > 1 && (
     <div class="pagination">
       <a 
-        href="/"
+        href={currentPage === 2 ? '/' : `/page/${currentPage - 1}`}
         class="pagination-button"
-        style="opacity: 0.5; cursor: not-allowed; pointer-events: none;"
+        style={currentPage === 1 ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;' : ''}
       >
         ← Previous
       </a>
+      
+      {pageLinks[0]?.page > 1 && (
+        <>
+          <a href="/" class="pagination-button">1</a>
+          {pageLinks[0]?.page > 2 && <span class="pagination-info">...</span>}
+        </>
+      )}
       
       {pageLinks.map(({ page, isActive }) => (
         <a 
@@ -120,7 +141,11 @@ const pageLinks = generatePageLinks(currentPage, totalPages);
         </>
       )}
       
-      <a href="/page/2" class="pagination-button">
+      <a 
+        href={`/page/${currentPage + 1}`}
+        class="pagination-button"
+        style={currentPage === totalPages ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;' : ''}
+      >
         Next →
       </a>
       

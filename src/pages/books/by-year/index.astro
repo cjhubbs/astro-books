@@ -38,71 +38,89 @@ const yearStats = years.map(year => {
 ---
 
 <BaseLayout>
-  <h1>Reading by Year</h1>
+  <h2 style="margin-bottom: 2rem; text-align: center;">Reading by Year</h2>
   
-  <p>Choose a year to see all books read that year</p>
-
   {years.length === 0 ? (
     <p>No reading data available.</p>
   ) : (
-    <ul class="year-list">
+    <div class="year-grid">
       {yearStats.map(stat => (
-        <li>
-          <a href={`/books/by-year/${stat.year}`}>
-            {stat.year}
-          </a>
-          <span class="stats">
-            {stat.bookCount} book{stat.bookCount !== 1 ? 's' : ''} • {stat.pageCount} page{stat.pageCount !== 1 ? 's' : ''}
-          </span>
-        </li>
+        <a href={`/books/by-year/${stat.year}`} class="year-card">
+          <div class="year-number">{stat.year}</div>
+          <div class="year-stats">
+            <div class="stat-item">
+              <span class="stat-value">{stat.bookCount}</span>
+              <span class="stat-label">book{stat.bookCount !== 1 ? 's' : ''}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{stat.pageCount}</span>
+              <span class="stat-label">page{stat.pageCount !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+        </a>
       ))}
-    </ul>
+    </div>
   )}
-  
-  <nav>
-    <a href="/">← Back to all books</a>
-  </nav>
 </BaseLayout>
 
 <style>
-  h1 {
+  .year-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .year-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow);
+    min-height: 200px;
+  }
+
+  .year-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .year-number {
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--accent-color);
     margin-bottom: 1rem;
   }
 
-  .year-list {
-    list-style-type: none;
-    padding: 0;
-  }
-
-  .year-list li {
+  .year-stats {
     display: flex;
-    justify-content: space-between;
+    gap: 2rem;
+    width: 100%;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #eee;
+    flex: 1;
   }
 
-  .year-list li:last-child {
-    border-bottom: none;
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
   }
 
-  .year-list a {
-    text-decoration: none;
-    color: inherit;
-    font-weight: 500;
-    font-size: 1.1em;
-  }
-
-  .year-list a:hover {
-    text-decoration: underline;
-  }
-
-  .stats {
-    color: #666;
-    font-size: 0.9em;
-  }
-
-  nav {
-    margin-top: 2rem;
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
   }
 </style>
