@@ -70,6 +70,10 @@ header {
   margin: 0;
 }
 
+.header-title a {
+    color: inherit;
+}
+
 .theme-toggle {
   background: none;
   border: 2px solid var(--border-color);
@@ -93,7 +97,6 @@ header {
 /* Navigation Styles */
 nav {
   background-color: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
   padding: 1rem 0;
 }
 
@@ -112,6 +115,26 @@ nav a:hover {
   border-bottom-color: var(--accent-color);
 }
 
+.intro {
+    padding-top: 0;
+    padding-bottom: 2rem;
+    display: flex;
+}
+
+.intro p {
+    margin-bottom: 1rem;
+}
+.flex-container {
+    flex-grow: 1;
+}
+
+.headshot {
+    width: 300px;
+    margin-top: 1rem;
+    display: flex;
+    justify-content: right;
+}
+
 /* Main Content */
 main {
   max-width: 1400px;
@@ -123,7 +146,7 @@ main {
 .book-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  gap: 4.5rem;
   margin-bottom: 3rem;
 }
 

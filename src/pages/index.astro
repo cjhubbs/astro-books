@@ -58,6 +58,18 @@ const pageLinks = generatePageLinks(currentPage, totalPages);
 ---
 
 <BaseLayout>
+  <div class="intro">
+    <div class="flex-container">
+    <h2>Hi, I'm Chris. Welcome to my Booklog.</h2>
+    <p>I love books.</p> 
+    <p>I was going to say I love reading books, but I own far too many that I haven't yet read, so maybe the first statement is more accurate. </p>
+    <p>I’ve been keeping track of my reading through various means since 2007. At various times I've used my blog, Goodreads, iOS apps, and at least one other static site, and never been 100% happy with any of them. This is my favorite one yet, though!</p>
+    <p>Scroll down to see the most recent books I've read, or use the links above to explore by year or by author. I'd love to hear about your favorite books!</p>
+    </div>
+    <div class="headshot">
+      <img width="300" src="/img/chris.jpg" alt="Chris" />
+    </div>
+  </div>
   <div class="book-grid">
     {books.map((book) => {
       const bookSlug = book.id.replace('.md', '');

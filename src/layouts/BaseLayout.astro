@@ -11,19 +11,19 @@ import "../styles/global.css";
   <body>
     <header>
       <div class="header-container">
-        <h1 class="header-title">The Booklog</h1>
+        <h1 class="header-title"><a href="/">The Booklog</a></h1>
+          <nav>
+            <a href="/">Home</a>
+            <a href="/books/by-year">By Year</a>
+            <a href="/authors">By Author</a>
+          </nav>
+
         <button class="theme-toggle" id="theme-toggle">
           <span id="theme-icon">🌙</span>
           <span id="theme-text">Dark</span>
         </button>
       </div>
     </header>
-
-    <nav>
-      <a href="/">Home</a>
-      <a href="/books/by-year">By Year</a>
-      <a href="/authors">By Author</a>
-    </nav>
 
     <main>
       <slot />
