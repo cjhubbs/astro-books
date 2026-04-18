@@ -5,9 +5,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 export async function getStaticPaths() {
   const books = await getCollection("books");
   const uniqueAuthors = Array.from(new Set(books.map(book => book.data.book.author))).sort();
-  
+
   return uniqueAuthors.map((author) => ({
-    params: { author: author.replace(/\s+/g, '-').toLowerCase() },
+    params: { author: author.replace(/\s+/g, "-").toLowerCase() },
     props: { author }
   }));
 }
@@ -19,62 +19,112 @@ interface Props {
 const { author } = Astro.props;
 const books = await getCollection("books");
 
-// Filter books by author and sort by publication_year
 const authorBooks = books
-  .filter(book => book.data.book.author === author)
+  .filter((book) => book.data.book.author === author)
   .sort((a, b) => {
     const yearA = a.data.book.publication_year || 0;
     const yearB = b.data.book.publication_year || 0;
     return yearA - yearB;
   });
+
+function renderStars(rating: number | undefined): string {
+  if (!rating) return "";
+  const fullStars = Math.floor(rating);
+  const emptyStars = 5 - fullStars;
+  return "★".repeat(fullStars) + "☆".repeat(emptyStars);
+}
+
+function getLatestDateRead(dateRead: Date[] | undefined): string {
+  if (!dateRead || dateRead.length === 0) return "";
+  const latestDate = dateRead[dateRead.length - 1];
+  return latestDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
 ---
 
 <BaseLayout>
-  <h1>{author}</h1>
-  
+  <Fragment slot="title">{author}</Fragment>
+
+  <section class="author-page-header">
+    <p class="eyebrow">Author page</p>
+    <h1>{author}</h1>
+    <p class="author-summary">
+      {authorBooks.length} {authorBooks.length === 1 ? "book" : "books"} in the log.
+    </p>
+    <p class="back-link"><a href="/authors">← Back to all authors</a></p>
+  </section>
+
   {authorBooks.length === 0 ? (
     <p>No books by this author.</p>
   ) : (
-    <ul>
-      {authorBooks.map(book => (
-        <li>
-          <a href={`/books/${book.id.replace(".md", "")}`}>
-            {book.data.book.title}
+    <div class="book-grid">
+      {authorBooks.map((book) => {
+        const bookSlug = book.id.replace(".md", "");
+        const localImagePath = `/img/${bookSlug}.jpg`;
+
+        return (
+          <a href={`/books/${bookSlug}`} class="book-card">
+            {localImagePath || book.data.book.cover_image_url ? (
+              <img
+                src={localImagePath}
+                onerror={`this.onerror=null; this.src='${book.data.book.cover_image_url || ""}'`}
+                alt={`${book.data.book.title} by ${book.data.book.author}`}
+                class="book-cover"
+              />
+            ) : (
+              <div class="book-cover-placeholder">No Cover Available</div>
+            )}
+            <div class="book-info">
+              <h3 class="book-title">{book.data.book.title}</h3>
+              <p class="book-author">{book.data.book.publication_year || ""}</p>
+              {book.data.book.rating && (
+                <div class="book-rating">
+                  <span class="stars">{renderStars(book.data.book.rating)}</span>
+                </div>
+              )}
+              {book.data.book.date_read && book.data.book.date_read.length > 0 && (
+                <p class="book-date">{getLatestDateRead(book.data.book.date_read)}</p>
+              )}
+            </div>
           </a>
-        </li>
-      ))}
-    </ul>
+        );
+      })}
+    </div>
   )}
-  
-  <nav>
-    <a href="/authors">← Back to all authors</a>
-  </nav>
 </BaseLayout>
 
 <style>
+  .author-page-header {
+    margin-bottom: 2rem;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
   h1 {
-    margin-bottom: 1rem;
+    margin-bottom: 0.35rem;
   }
 
-  ul {
-    list-style-type: none;
-    padding: 0;
+  .author-summary {
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
   }
 
-  li {
-    margin-bottom: 0.5rem;
+  .back-link {
+    margin: 0;
   }
 
-  a {
+  .book-card {
     text-decoration: none;
     color: inherit;
   }
 
-  a:hover {
-    text-decoration: underline;
-  }
-
-  nav {
-    margin-top: 2rem;
+  .book-card:hover {
+    text-decoration: none;
   }
 </style>

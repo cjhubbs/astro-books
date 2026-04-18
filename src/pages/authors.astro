@@ -3,24 +3,367 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 const books = await getCollection("books");
+const slugifyAuthor = (author: string) => author.replace(/\s+/g, "-").toLowerCase();
+const getAuthorParts = (author: string) => author.trim().split(/\s+/).filter(Boolean);
+const getLastName = (author: string) => {
+  const parts = getAuthorParts(author);
+  return (parts[parts.length - 1] ?? author).replace(/^[^a-z0-9]+|[^a-z0-9]+$/gi, "");
+};
+const getSortKey = (author: string) => {
+  const parts = getAuthorParts(author);
+  if (parts.length <= 1) return author.toLowerCase();
 
-const uniqueAuthors = Array.from(new Set(books.map(book => book.data.book.author))).sort();
+  const lastName = parts.pop();
+  return `${lastName} ${parts.join(" ")}`.toLowerCase();
+};
+
+const authorStats = Array.from(
+  books.reduce((map, book) => {
+    const author = book.data.book.author;
+    const current = map.get(author) ?? {
+      name: author,
+      slug: slugifyAuthor(author),
+      count: 0,
+      sortKey: getSortKey(author),
+      groupLetter: getLastName(author).charAt(0).toUpperCase(),
+    };
+
+    current.count += 1;
+    map.set(author, current);
+    return map;
+  }, new Map<string, {
+    name: string;
+    slug: string;
+    count: number;
+    sortKey: string;
+    groupLetter: string;
+  }>()).values(),
+).sort((a, b) => a.sortKey.localeCompare(b.sortKey) || a.name.localeCompare(b.name));
+
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+const groupedAuthors = letters
+  .map((letter) => ({
+    letter,
+    authors: authorStats.filter((author) => author.groupLetter === letter),
+  }))
+  .filter((group) => group.authors.length > 0);
+
+const featuredAuthors = [...authorStats]
+  .sort((a, b) => b.count - a.count || a.sortKey.localeCompare(b.sortKey))
+  .slice(0, 8);
 ---
 
 <BaseLayout>
-  <h1>All Authors</h1>
-  <ul>
+  <Fragment slot="title">All Authors</Fragment>
 
-        {uniqueAuthors.map((author) => (
-      <li>
-        <a href={`/authors/${author.replace(/\s+/g, '-').toLowerCase()}`}>
-          {author}
-        </a>
-      </li>
-    ))}
-  </ul>
+  <section class="authors-directory">
+    <div class="directory-header">
+      <p class="eyebrow">Browse the library</p>
+      <h1>Authors</h1>
+      <p class="directory-intro">
+        Explore the collection by author name, jump straight to a letter, or filter the list in real time.
+      </p>
+
+      <div class="directory-meta">
+        <div>
+          <strong>{authorStats.length}</strong>
+          <span>authors</span>
+        </div>
+        <div>
+          <strong>{books.length}</strong>
+          <span>books logged</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="directory-tools">
+      <label class="author-search">
+        <span class="sr-only">Search authors</span>
+        <input id="author-search" type="search" placeholder="Search authors…" autocomplete="off" />
+      </label>
+
+      <nav class="letter-nav" aria-label="Jump to author letter sections">
+        {letters.map((letter) => {
+          const exists = groupedAuthors.some((group) => group.letter === letter);
+          return exists ? (
+            <a href={`#letter-${letter}`}>{letter}</a>
+          ) : (
+            <span class="disabled">{letter}</span>
+          );
+        })}
+      </nav>
+    </div>
+
+    <div class="featured-authors">
+      <p class="featured-label">Most logged</p>
+      <div class="featured-list">
+        {featuredAuthors.map((author) => (
+          <a class="featured-pill" href={`/authors/${author.slug}`}>
+            <span>{author.name}</span>
+            <strong>{author.count}</strong>
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <div id="author-groups">
+      {groupedAuthors.map((group) => (
+        <section class="author-group" id={`letter-${group.letter}`} data-letter={group.letter}>
+          <div class="group-heading">
+            <h2>{group.letter}</h2>
+            <span>{group.authors.length}</span>
+          </div>
+
+          <ul class="author-list">
+            {group.authors.map((author) => (
+              <li class="author-item" data-author-name={author.name.toLowerCase()}>
+                <a href={`/authors/${author.slug}`}>
+                  <span class="name">{author.name}</span>
+                  <span class="count">{author.count} {author.count === 1 ? "book" : "books"}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+
+    <p id="no-results" class="no-results" hidden>No authors match that search.</p>
+  </section>
+
+  <script>
+    const searchInput = document.querySelector("#author-search");
+    const authorItems = Array.from(document.querySelectorAll(".author-item"));
+    const groups = Array.from(document.querySelectorAll(".author-group"));
+    const noResults = document.querySelector("#no-results");
+
+    if (searchInput && noResults) {
+      searchInput.addEventListener("input", (event) => {
+        const query = event.target.value.trim().toLowerCase();
+        let visibleCount = 0;
+
+        authorItems.forEach((item) => {
+          const name = item.dataset.authorName ?? "";
+          const matches = query === "" || name.includes(query);
+          item.hidden = !matches;
+          if (matches) visibleCount += 1;
+        });
+
+        groups.forEach((group) => {
+          const visibleItems = group.querySelectorAll(".author-item:not([hidden])").length;
+          group.hidden = visibleItems === 0;
+        });
+
+        noResults.hidden = visibleCount !== 0;
+      });
+    }
+  </script>
 </BaseLayout>
-      </li>
-    ))
-  </ul>
-</BaseLayout>
+
+<style>
+  .authors-directory {
+    display: grid;
+    gap: 2rem;
+  }
+
+  .directory-header {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .eyebrow,
+  .featured-label {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+  }
+
+  .directory-intro {
+    max-width: 42rem;
+    color: var(--text-secondary);
+  }
+
+  .directory-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .directory-meta div {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    min-width: 7rem;
+    box-shadow: var(--shadow);
+  }
+
+  .directory-meta strong {
+    display: block;
+    font-size: 1.25rem;
+  }
+
+  .directory-meta span {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .directory-tools {
+    display: grid;
+    gap: 1rem;
+    position: sticky;
+    top: 0.5rem;
+    background: var(--bg-primary);
+    z-index: 5;
+    padding: 0.5rem 0 0.75rem;
+  }
+
+  .author-search input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 1rem;
+  }
+
+  .letter-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0;
+  }
+
+  .letter-nav a,
+  .letter-nav span {
+    min-width: 2.1rem;
+    text-align: center;
+    padding: 0.4rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    background: var(--bg-secondary);
+  }
+
+  .letter-nav .disabled {
+    opacity: 0.4;
+  }
+
+  .featured-authors {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .featured-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .featured-pill {
+    display: inline-flex;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.5rem 0.8rem;
+    border-radius: 999px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+  }
+
+  .featured-pill strong {
+    background: var(--accent-color);
+    color: white;
+    border-radius: 999px;
+    padding: 0.05rem 0.45rem;
+    font-size: 0.8rem;
+  }
+
+  #author-groups {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .author-group {
+    scroll-margin-top: 8rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+  }
+
+  .group-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.75rem;
+  }
+
+  .group-heading h2 {
+    font-size: 1.5rem;
+  }
+
+  .group-heading span {
+    color: var(--text-secondary);
+  }
+
+  .author-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.75rem 1rem;
+    padding: 0;
+  }
+
+  .author-item a {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid transparent;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .author-item a:hover {
+    border-color: var(--accent-color);
+    text-decoration: none;
+  }
+
+  .author-item .name {
+    font-weight: 600;
+  }
+
+  .author-item .count {
+    color: var(--text-secondary);
+    white-space: nowrap;
+    font-size: 0.9rem;
+  }
+
+  .no-results {
+    color: var(--text-secondary);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 640px) {
+    .author-item a {
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+  }
+</style>
