@@ -1,5 +1,6 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import { existsSync } from "node:fs";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
 export async function getStaticPaths() {
@@ -11,132 +12,343 @@ export async function getStaticPaths() {
 }
 
 interface Props {
-  book: (typeof books)[0];
+  book: CollectionEntry<"books">;
 }
 
-const { book } = Astro.props;
-const books = await getCollection("books");
+const { book } = Astro.props as Props;
+const { Content } = await render(book);
 
-// Check for local cover image by directly constructing the path
-// book.id is like "author-slug/book-slug"
+const authorSlug = book.data.book.author.replace(/\s+/g, "-").toLowerCase();
 const localCoverPath = `/img/${book.id}.jpg`;
+const hasLocalCover = existsSync(new URL(`../../../public${localCoverPath}`, import.meta.url));
+const remoteCoverUrl = book.data.book.cover_image_url?.trim();
+const coverImageUrl = hasLocalCover ? localCoverPath : remoteCoverUrl;
+const hasReview = Boolean(book.body?.trim());
 
-const coverImageUrl = localCoverPath || book.data.book.cover_image_url;
+function renderStars(rating: number | undefined): string {
+  if (!rating) return "";
+  const fullStars = Math.floor(rating);
+  return "★".repeat(fullStars) + "☆".repeat(5 - fullStars);
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 ---
 
 <BaseLayout>
-  <article>
-    <h1>{book.data.book.title}</h1>
-    
-    <div class="book-meta">
-      <p><strong>Author:</strong> {book.data.book.author}</p>
-      {book.data.book.series && (
-        <p><strong>Series:</strong> {book.data.book.series} #{book.data.book.series_position}</p>
-      )}
-      {book.data.book.publication_year && (
-        <p><strong>Published:</strong> {book.data.book.publication_year}</p>
-      )}
-      {coverImageUrl && (
-        <div class="book-cover">
-          <img src={coverImageUrl} alt={book.data.book.title} />
-        </div>
-      )}
-      {book.data.book.isbn13 && (
-        <p><strong>ISBN-13:</strong> {book.data.book.isbn13}</p>
-      )}
-      {book.data.book.owned && (
-        <p><strong>Owned:</strong> Yes</p>
-      )}
-    </div>
+  <Fragment slot="title">{book.data.book.title}</Fragment>
 
-    {book.data.book.rating && (
-      <p><strong>Rating:</strong> ⭐ {book.data.book.rating}/5</p>
-    )}
-
-    {book.data.book.date_read && book.data.book.date_read.length > 0 && (
-      <div class="reading-history">
-        <strong>Read on:</strong>
-        <ul>
-          {book.data.book.date_read.map((date) => (
-            <li>{date.toDateString()}</li>
-          ))}
-        </ul>
-      </div>
-    )}
-
-    {book.data.book.tags && book.data.book.tags.length > 0 && (
-      <div class="tags">
-        <strong>Tags:</strong> {book.data.book.tags.join(", ")}
-      </div>
-    )}
-
-    {book.data.book.goodreads && (
-      <p>
-        <a href={`https://www.goodreads.com/book/show/${book.data.book.goodreads}`}>
-          View on Goodreads
-        </a>
-      </p>
-    )}
-
-    <div class="content">
-      {book.body && <p>{book.body}</p>}
-    </div>
-
-    <nav>
-      <a href="/books">← Back to all books</a>
+  <article class="book-page">
+    <nav class="book-nav">
+      <a href="/">Home</a>
+      <span>•</span>
+      <a href="/authors">Authors</a>
+      <span>•</span>
+      <a href={`/authors/${authorSlug}`}>More by {book.data.book.author}</a>
     </nav>
+
+    <div class="book-layout">
+      <aside class="cover-column">
+        {coverImageUrl ? (
+          <div class="cover-frame">
+            <img src={coverImageUrl} alt={`${book.data.book.title} cover`} class="book-cover" />
+          </div>
+        ) : (
+          <div class="cover-frame placeholder-frame">
+            <div class="book-cover-placeholder">No Cover Available</div>
+          </div>
+        )}
+      </aside>
+
+      <section class="details-column">
+        <h1>{book.data.book.title}</h1>
+        <p class="byline">
+          by <a href={`/authors/${authorSlug}`}>{book.data.book.author}</a>
+        </p>
+
+        {book.data.book.rating && (
+          <div class="rating-row" aria-label={`Rated ${book.data.book.rating} out of 5`}>
+            <span class="stars">{renderStars(book.data.book.rating)}</span>
+            <span class="rating-text">{book.data.book.rating}/5</span>
+          </div>
+        )}
+
+        <section class="detail-section review-section">
+          <div class="review-heading">
+            <h2>My review</h2>
+            {book.data.book.goodreads && (
+              <a href={`https://www.goodreads.com/book/show/${book.data.book.goodreads}`} target="_blank" rel="noreferrer">
+                Goodreads ↗
+              </a>
+            )}
+          </div>
+
+          {hasReview ? (
+            <div class="review-content">
+              <Content />
+            </div>
+          ) : (
+            <p class="empty-review">No review yet.</p>
+          )}
+        </section>
+
+        <div class="meta-grid">
+          {book.data.book.publication_year && (
+            <div class="meta-card">
+              <span class="meta-label">Published</span>
+              <strong>{book.data.book.publication_year}</strong>
+            </div>
+          )}
+          {book.data.book.pages && (
+            <div class="meta-card">
+              <span class="meta-label">Pages</span>
+              <strong>{book.data.book.pages}</strong>
+            </div>
+          )}
+          {book.data.book.series && (
+            <div class="meta-card">
+              <span class="meta-label">Series</span>
+              <strong>
+                {book.data.book.series}
+                {book.data.book.series_position ? ` #${book.data.book.series_position}` : ""}
+              </strong>
+            </div>
+          )}
+          {book.data.book.owned !== undefined && (
+            <div class="meta-card">
+              <span class="meta-label">Owned</span>
+              <strong>{book.data.book.owned ? "Yes" : "No"}</strong>
+            </div>
+          )}
+          {book.data.book.isbn13 && (
+            <div class="meta-card meta-card-wide">
+              <span class="meta-label">ISBN-13</span>
+              <strong>{book.data.book.isbn13}</strong>
+            </div>
+          )}
+        </div>
+
+        {book.data.book.date_read && book.data.book.date_read.length > 0 && (
+          <section class="detail-section meta-section">
+            <h2>Read on</h2>
+            <ul class="pill-list">
+              {book.data.book.date_read.map((date) => (
+                <li>{formatDate(date)}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {book.data.book.tags && book.data.book.tags.length > 0 && (
+          <section class="detail-section meta-section">
+            <h2>Tags</h2>
+            <ul class="pill-list">
+              {book.data.book.tags.map((tag) => (
+                <li>{tag}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </section>
+    </div>
   </article>
 </BaseLayout>
 
 <style>
-  article {
-    max-width: 600px;
-    margin: 0 auto;
+  .book-page {
+    display: grid;
+    gap: 1.5rem;
   }
 
-  .book-meta {
-    margin: 2rem 0;
+  .book-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .book-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .cover-column {
+    position: sticky;
+    top: 1rem;
+  }
+
+  .cover-frame {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
     padding: 1rem;
-    background: #f5f5f5;
-    border-radius: 0.5rem;
-  }
-
-  .book-meta p {
-    margin: 0.5rem 0;
-  }
-
-  .book-cover {
-    margin: 2rem 0;
+    box-shadow: var(--shadow);
     text-align: center;
   }
 
-  .book-cover img {
-    max-width: 250px;
+  .book-cover {
+    display: block;
+    height: 400px;
+    width: auto;
+    max-width: 100%;
+    margin: 0 auto;
+    object-fit: contain;
     border-radius: 0.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-hover);
   }
 
-  .reading-history,
-  .tags {
-    margin: 1.5rem 0;
+  .placeholder-frame {
+    min-height: 432px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .tags {
-    font-style: italic;
+  .book-cover-placeholder {
+    color: var(--text-secondary);
   }
 
-  nav {
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #ccc;
+  .details-column {
+    display: grid;
+    gap: 0.9rem;
   }
 
-  a {
-    color: #0066cc;
-    text-decoration: none;
+  h1 {
+    line-height: 1.15;
+    margin: 0;
   }
 
-  a:hover {
-    text-decoration: underline;
+  .byline {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+  }
+
+  .rating-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--rating-color);
+    font-weight: 600;
+  }
+
+  .rating-text {
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.35rem 1rem;
+    padding-top: 0.25rem;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .meta-card {
+    padding: 0.1rem 0;
+  }
+
+  .meta-card strong {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .meta-card-wide {
+    grid-column: span 2;
+  }
+
+  .meta-label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    margin-bottom: 0.15rem;
+  }
+
+  .detail-section {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .detail-section h2 {
+    font-size: 1rem;
+  }
+
+  .meta-section h2 {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .pill-list {
+    list-style: none;
+    display: grid;
+    gap: 0.2rem;
+    padding: 0;
+    margin: 0;
+  }
+
+  .pill-list li {
+    padding: 0;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+  }
+
+  .review-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 1rem 1.1rem;
+    box-shadow: var(--shadow);
+  }
+  .review-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .review-content :global(p) {
+    margin: 0 0 1rem 0;
+  }
+
+  .review-content :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .review-content :global(a) {
+    word-break: break-word;
+  }
+
+  .empty-review {
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .book-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .cover-column {
+      position: static;
+    }
+
+    .cover-frame {
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .meta-card-wide {
+      grid-column: span 1;
+    }
   }
 </style>
