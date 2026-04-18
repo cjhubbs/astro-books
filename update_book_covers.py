@@ -17,19 +17,21 @@ import requests
 from pathlib import Path
 from PIL import Image
 from io import BytesIO
-from urllib.parse import quote
 import time
 
 # Configuration
 BASE_DIR = Path(__file__).parent
 BOOKS_DIR = BASE_DIR / "src" / "content" / "books"
 IMG_DIR = BASE_DIR / "public" / "img"
-MIN_HEIGHT = 500
+MIN_HEIGHT = 400
 
 # Request headers to avoid blocks
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 }
+
+SESSION = requests.Session()
+SESSION.headers.update(HEADERS)
 
 
 def extract_frontmatter(file_path):
@@ -70,7 +72,7 @@ def search_book_cover_google_books(isbn, title, author):
         if isbn:
             url = f"https://www.googleapis.com/books/v1/volumes"
             params = {"q": f"isbn:{isbn}", "maxResults": 1}
-            response = requests.get(url, params=params, headers=HEADERS, timeout=10)
+            response = SESSION.get(url, params=params, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
@@ -88,25 +90,81 @@ def search_book_cover_google_books(isbn, title, author):
     return None
 
 
+def normalize_isbn(isbn):
+    """Normalize an ISBN to digits plus an optional trailing X."""
+    if not isbn:
+        return None
+
+    normalized = re.sub(r"[^0-9Xx]", "", str(isbn)).upper()
+    return normalized or None
+
+
+def lookup_openlibrary_olid(isbn):
+    """Look up an Open Library edition OLID from an ISBN via the book JSON endpoint."""
+    normalized_isbn = normalize_isbn(isbn)
+    if not normalized_isbn:
+        return None
+
+    lookup_urls = [
+        f"https://openlibrary.org/isbn/{normalized_isbn}.json",
+        (
+            "https://openlibrary.org/api/books"
+            f"?bibkeys=ISBN:{normalized_isbn}&format=json&jscmd=data"
+        ),
+    ]
+
+    for url in lookup_urls:
+        try:
+            response = SESSION.get(url, timeout=10)
+            if response.status_code != 200:
+                continue
+
+            data = response.json()
+
+            if isinstance(data, dict):
+                key = data.get("key")
+                if isinstance(key, str) and key.startswith("/books/"):
+                    return key.split("/")[-1]
+
+                item = data.get(f"ISBN:{normalized_isbn}")
+                if isinstance(item, dict):
+                    identifiers = item.get("identifiers", {})
+                    olids = identifiers.get("openlibrary", [])
+                    if olids:
+                        return olids[0]
+
+                    url_value = item.get("url", "")
+                    match = re.search(r"/books/(OL[^/]+M)", url_value)
+                    if match:
+                        return match.group(1)
+        except Exception as e:
+            print(f"OpenLibrary OLID lookup failed for ISBN {normalized_isbn}: {e}")
+
+    return None
+
+
 def search_book_cover_openlibrary(isbn, title, author):
-    """Search for a book cover using OpenLibrary API."""
+    """Search for a book cover using OpenLibrary OLIDs to avoid ISBN rate limits."""
     try:
-        if isbn:
-            # OpenLibrary provides direct book cover URLs by ISBN
-            url = f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
-            response = requests.head(url, headers=HEADERS, timeout=10)
-            if response.status_code == 200:
-                return url
+        olid = lookup_openlibrary_olid(isbn)
+        if not olid:
+            return None
+
+        url = f"https://covers.openlibrary.org/b/olid/{olid}-L.jpg?default=false"
+        response = SESSION.head(url, timeout=10, allow_redirects=True)
+
+        if response.status_code == 200:
+            return url
     except Exception as e:
         print(f"OpenLibrary search failed: {e}")
-    
+
     return None
 
 
 def download_image(image_url, file_path):
     """Download an image from a URL and save it to a file."""
     try:
-        response = requests.get(image_url, headers=HEADERS, timeout=15)
+        response = SESSION.get(image_url, timeout=15)
         response.raise_for_status()
         
         # Verify it's a valid image
@@ -143,7 +201,7 @@ def process_book(book_path, author_slug):
         return None
     
     title = book_data.get("title")
-    isbn = book_data.get("isbn13")
+    isbn = book_data.get("isbn13") or book_data.get("isbn10")
     author = book_data.get("author")
     
     if not title:
@@ -158,14 +216,14 @@ def process_book(book_path, author_slug):
     height = get_image_height(image_path)
     
     if height and height >= MIN_HEIGHT:
-        print(f"✓ {title} ({author_slug}): Image exists and is {height}px tall")
+        #print(f"✓ {title} ({author_slug}): Image exists and is {height}px tall")
         return {"status": "ok", "height": height}
     
     # Image is missing or too small, search for a better one
     if height:
         print(f"⚠️  {title} ({author_slug}): Image is only {height}px tall, searching for larger...")
     else:
-        print(f"🔍 {title} ({author_slug}): Image missing, searching...")
+        print(f"🔍 {title} ({author_slug}): Image ({image_path} missing, searching...")
     
     if not isbn:
         print(f"❌ {title}: No ISBN available, cannot search")
@@ -175,25 +233,25 @@ def process_book(book_path, author_slug):
     image_url = None
     
     # # Try OpenLibrary first (usually has consistent URLs)
-    #image_url = search_book_cover_openlibrary(isbn, title, author)
-    #if not image_url:
+    image_url = search_book_cover_openlibrary(isbn, title, author)
+    if not image_url:
         # Fall back to Google Books
-    #image_url = search_book_cover_google_books(isbn, title, author)
+        image_url = search_book_cover_google_books(isbn, title, author)
     
-    #if not image_url:
-    #    print(f"❌ {title}: Could not find cover image online (ISBN: {isbn})")
-    #    return {"status": "not_found"}
+    if not image_url:
+        print(f"❌ {title}: Could not find cover image online (ISBN: {isbn})")
+        return {"status": "not_found"}
     
-    # # Download the image
-    #print(f"⬇️  {title}: Downloading from {image_url[:60]}...")
-    #success, new_height = download_image(image_url, image_path)
+    # Download the image
+    print(f"⬇️  {title}: Downloading from {image_url[:60]}...")
+    success, new_height = download_image(image_url, image_path)
     
-    #if success:
-    #    print(f"✅ {title}: Downloaded image ({new_height}px tall)")
-    #    return {"status": "updated", "height": new_height, "url": image_url}
-   # else:
-   #     print(f"❌ {title}: Failed to download image")
-    #    return {"status": "download_failed"}
+    if success:
+        print(f"✅ {title}: Downloaded image ({new_height}px tall)")
+        return {"status": "updated", "height": new_height, "url": image_url}
+    else:
+        print(f"❌ {title}: Failed to download image")
+        return {"status": "download_failed"}
 
 
 def main():
