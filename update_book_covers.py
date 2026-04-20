@@ -279,7 +279,7 @@ def main():
         author_slug = author_dir.name
         book_files = list(author_dir.glob("*.md"))
         
-        if not book_files:
+        if not book_files or author_slug[0] < "s":
             continue
         
         print(f"\n📚 {author_slug}/ ({len(book_files)} books)")
