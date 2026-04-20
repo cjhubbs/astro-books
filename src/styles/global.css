@@ -118,21 +118,50 @@ nav a:hover {
 .intro {
     padding-top: 0;
     padding-bottom: 2rem;
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(180px, 24vw, 300px);
+    gap: 2rem;
+    align-items: start;
 }
 
 .intro p {
     margin-bottom: 1rem;
 }
 .flex-container {
-    flex-grow: 1;
+    min-width: 0;
 }
 
 .headshot {
-    width: 300px;
     margin-top: 1rem;
     display: flex;
-    justify-content: right;
+    justify-content: flex-end;
+}
+
+.headshot img {
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    object-fit: cover;
+    border-radius: 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .intro {
+    grid-template-columns: minmax(0, 1fr) 180px;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .intro {
+    grid-template-columns: 1fr;
+  }
+
+  .headshot {
+    justify-content: center;
+    margin-top: 0;
+  }
 }
 
 /* Main Content */

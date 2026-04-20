@@ -99,7 +99,7 @@ class BookAdder:
         """Get cover image URL from Open Library."""
         if not cover_id:
             return None
-        return f"https://covers.openlibrary.org/b/id/{cover_id}-M.jpg"
+        return f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
 
     def slugify(self, text: str) -> str:
         """Convert text to slug format (lowercase with hyphens)."""
