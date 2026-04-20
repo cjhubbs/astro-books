@@ -229,6 +229,7 @@ def process_book(book_path, author_slug):
         print(f"❌ {title}: No ISBN available, cannot search")
         return {"status": "no_isbn"}
     
+    return 
     # Try multiple sources
     image_url = None
     
@@ -279,7 +280,7 @@ def main():
         author_slug = author_dir.name
         book_files = list(author_dir.glob("*.md"))
         
-        if not book_files or author_slug[0] < "s":
+        if not book_files:
             continue
         
         print(f"\n📚 {author_slug}/ ({len(book_files)} books)")
