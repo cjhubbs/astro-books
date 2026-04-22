@@ -171,6 +171,51 @@ main {
   padding: 1rem 2rem;
 }
 
+.site-footer {
+  margin-top: 3rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.site-footer-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.copyright {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.rss-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.rss-link svg {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rss-link:hover {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
 /* Grid Layout */
 .book-grid {
   display: grid;

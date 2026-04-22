@@ -1,11 +1,14 @@
 ---
 import "../styles/global.css";
+
+const currentYear = new Date().getFullYear();
 ---
 
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="alternate" type="application/rss+xml" title="Chris Hubbs' Booklog RSS Feed" href="/rss.xml" />
     <title>Chris Hubbs' Booklog</title>
   </head>
   <body>
@@ -28,6 +31,20 @@ import "../styles/global.css";
     <main>
       <slot />
     </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-content">
+        <p class="copyright">Book reviews &copy; {currentYear} Chris Hubbs.</p>
+        <a class="rss-link" href="/rss.xml" aria-label="Subscribe to the RSS feed">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="6" cy="18" r="2.2"></circle>
+            <path d="M4 10a10 10 0 0 1 10 10"></path>
+            <path d="M4 4a16 16 0 0 1 16 16"></path>
+          </svg>
+          <span>RSS</span>
+        </a>
+      </div>
+    </footer>
 
     <script>
       // Dark mode toggle
