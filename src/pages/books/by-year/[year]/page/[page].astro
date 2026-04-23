@@ -39,6 +39,9 @@ export async function getStaticPaths() {
       }
     });
 
+    // Sort by date read (descending - newest first)
+    readsInYear.sort((a, b) => b.date.getTime() - a.date.getTime());
+
     const BOOKS_PER_PAGE = 12;
     const totalBooks = readsInYear.length;
     const totalPages = Math.ceil(totalBooks / BOOKS_PER_PAGE);
