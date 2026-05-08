@@ -7,7 +7,7 @@ book:
   publication_year: 2022
   date_read:
     - 2026-05-07
-  rating:
+  rating: 4
   tags: []
   title: 'When Women Were Dragons'
 ---
