@@ -5,7 +5,7 @@ book:
   owned: false
   publication_year: 2023
   date_read:
-    - 2026-05-11
+    - 2026-05-10
   rating: 3
   tags: []
   title: 'Unseen Beings'
