@@ -1,6 +1,6 @@
 ---
 book:
-  author: thomas-jay-oord
+  author: "Thomas Jay Oord" 
   isbn13: '9781968136505'
   owned: false
   publication_year: 2026
