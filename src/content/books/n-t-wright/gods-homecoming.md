@@ -1,11 +1,12 @@
 ---
 book:
-  author: "N. T. Wright" 
+  author: N.T. Wright 
   isbn13: '9780062564177'
   owned: false
   date_read:
     - 2026-06-06
   rating: 4
+  publication_year: 2026
   pages: 303
   tags: []
   title: "God's Homecoming"
