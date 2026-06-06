@@ -5,7 +5,7 @@ book:
   owned: false
   date_read:
     - 2026-06-06
-  rating:
+  rating: 4
   pages: 303
   tags: []
   title: "God's Homecoming"
