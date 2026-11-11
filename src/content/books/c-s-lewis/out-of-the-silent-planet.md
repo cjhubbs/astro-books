@@ -1,6 +1,6 @@
 ---
 book:
-  author: C. S. Lewis
+  author: C.S. Lewis
   isbn13: '9780684823805'
   owned: false
   pages: 160
