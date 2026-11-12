@@ -2,6 +2,9 @@
 import "../styles/global.css";
 
 const currentYear = new Date().getFullYear();
+const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+const isCurrent = (href: string) =>
+  href === "/" ? path === "/" || path.startsWith("/page/") : path === href || path.startsWith(href + "/");
 ---
 
 <html lang="en">
@@ -9,16 +12,26 @@ const currentYear = new Date().getFullYear();
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="alternate" type="application/rss+xml" title="Chris Hubbs' Booklog RSS Feed" href="/rss.xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Newsreader:ital,opsz,wght@0,6..72,300..800;1,6..72,300..800&family=Space+Grotesk:wght@400..700&display=swap"
+    />
+    <script is:inline>
+      // Set the theme before first paint to avoid a flash (default: royal blue, like chrishubbs.com)
+      document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "dark");
+    </script>
     <title>Chris Hubbs' Booklog</title>
   </head>
   <body>
     <header>
       <div class="header-container">
-        <h1 class="header-title"><a href="/">The Booklog</a></h1>
+        <h1 class="header-title"><a href="/"><span class="brand-mark" aria-hidden="true"></span><span>The <b>Booklog</b></span></a></h1>
           <nav>
-            <a href="/">Home</a>
-            <a href="/books/by-year">By Year</a>
-            <a href="/authors">By Author</a>
+            <a href="/" aria-current={isCurrent("/") ? "page" : undefined}>Home</a>
+            <a href="/books/by-year" aria-current={isCurrent("/books/by-year") ? "page" : undefined}>By Year</a>
+            <a href="/authors" aria-current={isCurrent("/authors") ? "page" : undefined}>By Author</a>
           </nav>
 
         <button class="theme-toggle" id="theme-toggle">
@@ -34,7 +47,7 @@ const currentYear = new Date().getFullYear();
 
     <footer class="site-footer">
       <div class="site-footer-content">
-        <p class="copyright">Book reviews &copy; {currentYear} Chris Hubbs.</p>
+        <p class="copyright"><span class="brand-mark" aria-hidden="true"></span>Book reviews &copy; {currentYear} Chris Hubbs.</p>
         <a class="rss-link" href="/rss.xml" aria-label="Subscribe to the RSS feed">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <circle cx="6" cy="18" r="2.2"></circle>
@@ -53,8 +66,8 @@ const currentYear = new Date().getFullYear();
       const themeText = document.getElementById("theme-text");
       const html = document.documentElement;
 
-      // Check for saved theme preference or default to light mode
-      const savedTheme = localStorage.getItem("theme") || "light";
+      // Check for saved theme preference or default to dark (royal blue)
+      const savedTheme = localStorage.getItem("theme") || "dark";
       html.setAttribute("data-theme", savedTheme);
       updateThemeUI(savedTheme);
 
